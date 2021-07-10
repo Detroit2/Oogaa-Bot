@@ -17,6 +17,44 @@ async def on_ready():
     print("The bot is ready to go!")
     await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="OOGAA BOOGA! Join our server! Code: nSyn75Ny7u"))
 
+#get_mention_data function
+async def get_mention_data():
+    with open("mention.json", "r") as f:
+        m = json.load(f)
+    
+    return m
+
+#open_mention function
+async def open_mention(user):
+    users = await get_mention_data()
+
+    if str(user.id) in users:
+        return False
+
+    else:
+        users[str(user.id)] = 0
+
+    with open("mention.json", "w") as f:
+        json.dump(users, f, indent=4)
+
+    return True
+
+#add_mention function
+async def add_mention(user, amt):
+    users = await get_mention_data()
+    users[str(user.id)] += int(amt)
+
+    with open("mention.json", "w") as f:
+        json.dump(users, f, indent=4)
+
+#remove_mention function
+async def remove_mention(user):
+    users = await get_mention_data()
+    del users[str(user.id)]
+
+    with open("mention.json", "w") as f:
+        json.dump(users, f, indent=4)
+
 #on_message event
 @client.event
 async def on_message(message):
@@ -26,7 +64,7 @@ async def on_message(message):
         await message.channel.send(f"OOGA BOOGA")
 
     with open("afk.json", "r") as f:
-        afk = json.load(f)
+        afk = json.load(f)            
 
     if message != None:
         if str(message.guild.id) in afk:
