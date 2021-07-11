@@ -39,6 +39,96 @@ async def add_afk(server, user, message, image):
         json.dump(users,f,indent=4)
     return True
 
+#get_snipe_data function
+async def get_snipe_data():
+    with open("snipe.json", "r") as f:
+        users = json.load(f)
+
+    return users
+
+#open_snipe function
+async def open_snipe(server):
+    users = await get_snipe_data()
+
+    if str(server) in users:
+        return False
+
+    else:
+        users[str(server)] = {}
+
+    with open("snipe.json", "w") as f:
+        json.dump(users,f,indent=4)
+    return True
+
+#get_number_data function
+async def get_number_data():
+    with open("number.json", "r") as f:
+        users = json.load(f)
+
+    return users
+
+#open_number function
+async def open_number(server):
+    users = await get_number_data()
+
+    if str(server) in users:
+        return False
+
+    else:
+        users[str(server)] = {}
+        users[str(server)]["2"] = 1
+
+    with open("number.json", "w") as f:
+        json.dump(users,f,indent=4)
+    return True
+
+#add_number function
+async def add_number(server):
+    users = await get_number_data()
+
+    n = users[str(server)]["2"]
+    users[str(server)]["2"] =  n + 1
+
+    with open("number.json", "w") as f:
+        json.dump(users,f,indent=4)
+    return True
+
+#add_snipe function
+async def add_snipe(server, message, time, author, channel):
+    users = await get_snipe_data()
+    number = await get_number_data()
+    n = number[str(server)]["2"]
+    s = 0
+    for l in users[str(server)]:
+        s += 1
+
+    if s < 4:
+        users[str(server)][str(n)] = {}
+        users[str(server)][str(n)]["message"] = str(message)
+        users[str(server)][str(n)]["time"] = str(time)
+        users[str(server)][str(n)]["author"] = str(author)
+        users[str(server)][str(n)]["channel"] = str(channel)
+
+    else:
+        sum = 0
+        for i in users[str(server)]:
+            if sum == 0:
+                x = i
+                del users[str(server)][x]
+                users[str(server)][str(n)] = {}
+                users[str(server)][str(n)]["message"] = str(message)
+                users[str(server)][str(n)]["time"] = str(time)
+                users[str(server)][str(n)]["author"] = str(author)
+                users[str(server)][str(n)]["channel"] = str(channel)
+                with open("snipe.json", "w") as f:
+                    json.dump(users,f,indent=4)
+                return
+
+    with open("snipe.json", "w") as f:
+        json.dump(users,f,indent=4)
+
+    return True
+
 class Misc(commands.Cog):
 
     def __init__(self, client):
@@ -47,6 +137,44 @@ class Misc(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         print('misccmds file is ready')
+
+    #message_delete
+    @commands.Cog.listener()
+    async def on_message_delete(self, message):
+        await open_number(message.guild.id)
+        await open_snipe(message.guild.id)
+        await add_snipe(message.guild.id, message.content, message.created_at, message.author.id, message.channel.name)
+        await add_number(message.guild.id)
+
+    #snipe command
+    @commands.command()
+    async def snipe(self, ctx, number: int = None):
+        if number == None:
+            number = 1
+
+        if number > 4:
+            await ctx.send("The number artribute can be only smaller than or equal to 4!")
+            return
+
+        number -= 1
+        await open_number(ctx.guild.id)
+        await open_snipe(ctx.guild.id)
+        users = await get_snipe_data()
+        sum = 0
+        for i in users[str(ctx.guild.id)]:
+            if sum == number:
+                message = users[str(ctx.guild.id)][i]["message"]
+                time = users[str(ctx.guild.id)][i]["time"]
+                channel = users[str(ctx.guild.id)][i]["channel"]
+                id_ = users[str(ctx.guild.id)][i]["author"]
+                author = await self.client.fetch_user(int(id_))
+                em = discord.Embed(description=message, color=ctx.author.color)
+                em.set_author(name=f"{author.name}#{author.discriminator}", icon_url=author.avatar_url)
+                em.set_footer(text=f"Deleted in : #{channel}")
+                await ctx.send(embed=em)
+                return
+            
+            sum += 1
 
     #roblox command
     @commands.command()
