@@ -3,12 +3,11 @@ from discord.ext import commands
 import keep_alive
 import os
 import json
-import PIL
 
 from PIL import Image, ImageFont, ImageDraw
 from io import BytesIO
 
-client = commands.Bot(command_prefix="-", case_insensitive=True)
+client = commands.Bot(command_prefix="+", case_insensitive=True)
 client.remove_command("help")
 
 for filename in os.listdir('./cogs'):
@@ -97,12 +96,13 @@ async def level_up(user):
 
     experience = users[str(user.id)]["experience"]
     lvl_start = users[str(user.id)]["level"]
-    lvl_end = int(experience ** (1/4))
+    lvl_end = int(lvl_start) ** 4
 
-    if lvl_start < lvl_end:
+    if experience >= lvl_end:
         channel = client.get_channel(863800186680901643)
-        await channel.send(f"Congrats {user.mention}! You have leveled up to level {lvl_end}! Keep it up!")
-        users[str(user.id)]["level"] = lvl_end
+        e = lvl_start + 1
+        await channel.send(f"Congrats {user.mention}! You have leveled up to level {e}! Keep it up!")
+        users[str(user.id)]["level"] += 1
         with open("level.json", "w") as f:
             json.dump(users, f, indent=4)
 

@@ -1,3 +1,4 @@
+import re
 import discord
 from discord.ext import commands
 import json
@@ -129,6 +130,44 @@ async def add_snipe(server, message, time, author, channel):
 
     return True
 
+#get_point_data function
+async def get_point_data():
+    with open("points.json", "r") as f:
+        users = json.load(f)
+
+    return users
+
+#open_point function
+async def open_point(user):
+    users = await get_point_data()
+
+    if str(user.id) in users:
+        return False
+
+    else:
+        users[str(user.id)] = 0
+
+    with open("points.json", "w") as f:
+        json.dump(users, f, indent=4)
+
+    return True
+
+#add_point function
+async def add_point(user, point):
+    users = await get_point_data()
+    users[str(user.id)] += point
+    
+    with open("points.json", "w") as f:
+        json.dump(users, f, indent=4)
+
+#remove_point function
+async def remove_point(user, point):
+    users = await get_point_data()
+    users[str(user.id)] -= point
+    
+    with open("points.json", "w") as f:
+        json.dump(users, f, indent=4)
+
 class Misc(commands.Cog):
 
     def __init__(self, client):
@@ -145,6 +184,54 @@ class Misc(commands.Cog):
         await open_snipe(message.guild.id)
         await add_snipe(message.guild.id, message.content, message.created_at, message.author.id, message.channel.name)
         await add_number(message.guild.id)
+
+    #addpoint comamnd
+    @commands.command()
+    async def addpoint(self, ctx, member: discord.Member = None, points: int = None):
+        if ctx.author.id == 624824900804149258 or ctx.author.id == 770317257645228042:
+            if member == None:
+                await ctx.send("Please provide a member to add points to next time!")
+                return
+
+            if points == None:
+                points = 2
+
+            await open_point(member)
+            await add_point(member, points)
+            await ctx.send(f"Successfully added `{points}` points to {member.mention}")
+            return
+
+        await ctx.send(f"You don't have permissions to use this command! Only Coddy and Spade have permissions to use it!")
+
+    #removepoint comamnd
+    @commands.command()
+    async def removepoint(self, ctx, member: discord.Member = None, points: int = None):
+        if ctx.author.id == 624824900804149258 or ctx.author.id == 770317257645228042:
+            if member == None:
+                await ctx.send("Please provide a member to remove points from next time!")
+                return
+
+            if points == None:
+                points = 2
+
+            await open_point(member)
+            await remove_point(member, points)
+            await ctx.send(f"Successfully removed `{points}` points to {member.mention}")
+            return
+
+        await ctx.send(f"You don't have permissions to use this command! Only Coddy and Spade have permissions to use it!")
+
+    #points command
+    @commands.command()
+    async def points(self, ctx, member: discord.Member = None):
+        if member == None:
+            member = ctx.author
+
+        await open_point(member)
+        users = await get_point_data()
+        point = users[str(member.id)]
+        em = discord.Embed(title=f"Number of  points of {member.name}: `{point}`", color = ctx.author.color)
+        await ctx.send(embed=em)
 
     #snipe command
     @commands.command()
